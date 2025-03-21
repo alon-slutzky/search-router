@@ -81,11 +81,18 @@
                 const trimmedQuery = query.trim();
                 const words = trimmedQuery.split(/\s+/).filter(word => word.length > 0);
                 
-                // Check if query starts with "maps" (case insensitive)
-                if (trimmedQuery.toLowerCase().startsWith("maps")) {
+                // Check for special prefixes (case insensitive)
+                const lowerQuery = trimmedQuery.toLowerCase();
+                
+                if (lowerQuery.startsWith("maps ")) {
                     // Remove "maps" prefix and send to Google Maps
-                    const mapsQuery = trimmedQuery.substring(4).trim();
+                    const mapsQuery = trimmedQuery.substring(5).trim();
                     window.location.replace(`https://www.google.com/maps/search/${encodeURIComponent(mapsQuery)}`);
+                }
+                else if (lowerQuery.startsWith("claude ")) {
+                    // Remove "claude" prefix and send to Claude
+                    const claudeQuery = trimmedQuery.substring(7).trim();
+                    window.location.replace(`https://claude.ai/chat?text=${encodeURIComponent(claudeQuery)}`);
                 }
                 // Route based on word count
                 else if (words.length <= 3) {
@@ -102,9 +109,10 @@
 <body>
     <div class="container">
         <h1>Search Router</h1>
-        <p>This service routes your searches to different search engines based on these rules:</p>
+        <p>This service routes your searches to different engines based on these rules:</p>
         <ul>
-            <li><strong>Starts with "maps":</strong> Google Maps (regardless of length)</li>
+            <li><strong>Starts with "maps ":</strong> Google Maps (regardless of length)</li>
+            <li><strong>Starts with "claude ":</strong> Claude AI chat interface (regardless of length)</li>
             <li><strong>3 words or less:</strong> Google Search</li>
             <li><strong>More than 3 words:</strong> Perplexity.ai</li>
         </ul>
