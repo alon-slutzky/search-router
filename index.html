@@ -78,9 +78,17 @@
             
             // If we have a query, route it immediately
             if (query) {
-                const words = query.trim().split(/\s+/).filter(word => word.length > 0);
+                const trimmedQuery = query.trim();
+                const words = trimmedQuery.split(/\s+/).filter(word => word.length > 0);
                 
-                if (words.length <= 3) {
+                // Check if query starts with "maps" (case insensitive)
+                if (trimmedQuery.toLowerCase().startsWith("maps")) {
+                    // Remove "maps" prefix and send to Google Maps
+                    const mapsQuery = trimmedQuery.substring(4).trim();
+                    window.location.replace(`https://www.google.com/maps/search/${encodeURIComponent(mapsQuery)}`);
+                }
+                // Route based on word count
+                else if (words.length <= 3) {
                     // Google for 3 words or less
                     window.location.replace(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
                 } else {
@@ -94,9 +102,10 @@
 <body>
     <div class="container">
         <h1>Search Router</h1>
-        <p>This service routes your searches to different search engines based on query length:</p>
+        <p>This service routes your searches to different search engines based on these rules:</p>
         <ul>
-            <li><strong>3 words or less:</strong> Google</li>
+            <li><strong>Starts with "maps":</strong> Google Maps (regardless of length)</li>
+            <li><strong>3 words or less:</strong> Google Search</li>
             <li><strong>More than 3 words:</strong> Perplexity.ai</li>
         </ul>
 
