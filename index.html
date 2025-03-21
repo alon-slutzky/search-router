@@ -8,14 +8,35 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/search-router/service-worker.js', {
-                    scope: '/search-router/'
-                }).then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }).catch(function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    }).catch(function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                        // Fallback: use the hash-based method if service worker fails
+                        useHashMethod();
+                    });
             });
+        } else {
+            // Fallback for browsers without service worker support
+            useHashMethod();
+        }
+        
+        // Implement hash-based routing as a fallback
+        function useHashMethod() {
+            console.log("Using hash-based routing as fallback");
+            // Update your Chrome search engine to use #q=%s instead of ?q=%s
+            const hashValue = window.location.hash.substring(1);
+            if (hashValue && hashValue.startsWith('q=')) {
+                const query = decodeURIComponent(hashValue.substring(2));
+                const words = query.trim().split(/\s+/).filter(word => word.length > 0);
+                
+                if (words.length <= 3) {
+                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                } else {
+                    window.location.href = `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
+                }
+            }
         }
     </script>
     <style>
