@@ -4,37 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Router</title>
+    <!-- Preconnect to destination sites to speed up redirects -->
+    <link rel="preconnect" href="https://www.google.com">
+    <link rel="preconnect" href="https://www.perplexity.ai">
+    
+    <!-- Hide everything until page is fully loaded -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            line-height: 1.6;
-            transition: opacity 0.2s;
+        /* Set background to black immediately */
+        html, body {
+            background-color: black;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
         }
+        
+        /* Hide content by default */
+        .content {
+            opacity: 0;
+            transition: opacity 0.5s;
+            background-color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        
+        /* Only show content when we know we're not redirecting */
+        .content.show {
+            opacity: 1;
+        }
+        
         .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
             background-color: #f5f5f5;
             border-radius: 8px;
-            padding: 30px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
         }
-        h1 {
-            color: #333;
-            margin-top: 0;
-        }
+        
         code {
             background-color: #eee;
             padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
         }
-        .setup-steps {
-            margin-top: 30px;
-        }
-        .setup-steps li {
-            margin-bottom: 15px;
-        }
+        
         .note {
             background-color: #fffde7;
             border-left: 4px solid #ffd600;
@@ -42,21 +62,60 @@
             margin: 20px 0;
         }
     </style>
+    
+    <!-- Execute routing logic as early as possible -->
+    <script>
+        // Execute before the page even starts rendering
+        (function() {
+            // Check both methods: hash and query parameter
+            let query = null;
+            
+            // Method 1: Check the hash (preferred method - faster)
+            if (window.location.hash && window.location.hash.startsWith('#q=')) {
+                query = decodeURIComponent(window.location.hash.substring(3));
+            }
+            
+            // Method 2: Check query parameters (fallback)
+            if (!query && window.location.search) {
+                const urlParams = new URLSearchParams(window.location.search);
+                query = urlParams.get('q');
+            }
+            
+            // If we have a query, route it immediately
+            if (query) {
+                const words = query.trim().split(/\s+/).filter(word => word.length > 0);
+                
+                if (words.length <= 3) {
+                    // Google for 3 words or less
+                    window.location.replace(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+                } else {
+                    // Perplexity for more than 3 words
+                    window.location.replace(`https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`);
+                }
+            } else {
+                // Only if we're not redirecting, show the content later
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.querySelector('.content').classList.add('show');
+                });
+            }
+        })();
+    </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Search Router</h1>
-        <p>This service routes your searches to different search engines based on query length:</p>
-        <ul>
-            <li><strong>3 words or less:</strong> Google</li>
-            <li><strong>More than 3 words:</strong> Perplexity.ai</li>
-        </ul>
+    <!-- Content is hidden by default and only shown if not redirecting -->
+    <div class="content">
+        <div class="container">
+            <h1>Search Router</h1>
+            <p>This service routes your searches to different search engines based on query length:</p>
+            <ul>
+                <li><strong>3 words or less:</strong> Google</li>
+                <li><strong>More than 3 words:</strong> Perplexity.ai</li>
+            </ul>
 
-        <div class="note">
-            <p>If you're seeing this page, it means you've accessed the service directly instead of through a search query.</p>
-        </div>
+            <div class="note">
+                <p>If you're seeing this page, it means you've accessed the service directly instead of through a search query.</p>
+            </div>
 
-        <div class="setup-steps">
             <h2>How to Set Up in Chrome</h2>
             <ol>
                 <li>Go to Chrome Settings → Search engine → Manage search engines and site search</li>
@@ -73,49 +132,5 @@
             </ol>
         </div>
     </div>
-
-    <script>
-        // Function to handle search routing
-        function routeSearch() {
-            // Check both methods: hash and query parameter
-            let query = null;
-            
-            // Method 1: Check the hash (preferred method - faster)
-            if (window.location.hash && window.location.hash.startsWith('#q=')) {
-                query = decodeURIComponent(window.location.hash.substring(3));
-            }
-            
-            // Method 2: Check query parameters (fallback)
-            if (!query) {
-                const urlParams = new URLSearchParams(window.location.search);
-                query = urlParams.get('q');
-            }
-            
-            // If we have a query, route it
-            if (query) {
-                // Hide the page content instantly
-                document.body.style.opacity = '0';
-                
-                // Count words by splitting on whitespace
-                const words = query.trim().split(/\s+/).filter(word => word.length > 0);
-                
-                // Decide which search engine to use
-                if (words.length <= 3) {
-                    // Google for 3 words or less
-                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                } else {
-                    // Perplexity for more than 3 words
-                    window.location.href = `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
-                }
-            }
-        }
-        
-        // Run immediately and also on hash changes
-        window.addEventListener('hashchange', routeSearch);
-        document.addEventListener('DOMContentLoaded', routeSearch);
-        
-        // Try to run as early as possible
-        routeSearch();
-    </script>
 </body>
 </html>
