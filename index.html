@@ -4,41 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Router</title>
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    }).catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                        // Fallback: use the hash-based method if service worker fails
-                        useHashMethod();
-                    });
-            });
-        } else {
-            // Fallback for browsers without service worker support
-            useHashMethod();
-        }
-        
-        // Implement hash-based routing as a fallback
-        function useHashMethod() {
-            console.log("Using hash-based routing as fallback");
-            // Update your Chrome search engine to use #q=%s instead of ?q=%s
-            const hashValue = window.location.hash.substring(1);
-            if (hashValue && hashValue.startsWith('q=')) {
-                const query = decodeURIComponent(hashValue.substring(2));
-                const words = query.trim().split(/\s+/).filter(word => word.length > 0);
-                
-                if (words.length <= 3) {
-                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                } else {
-                    window.location.href = `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
-                }
-            }
-        }
-    </script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,6 +11,7 @@
             margin: 0 auto;
             padding: 40px 20px;
             line-height: 1.6;
+            transition: opacity 0.2s;
         }
         .container {
             background-color: #f5f5f5;
@@ -99,7 +65,7 @@
                     <ul>
                         <li><strong>Search engine:</strong> Smart Router</li>
                         <li><strong>Shortcut:</strong> router (or any keyword you prefer)</li>
-                        <li><strong>URL:</strong> <code>https://yourserver.com/router?q=%s</code></li>
+                        <li><strong>URL:</strong> <code>https://yourserver.com/search-router/#q=%s</code></li>
                     </ul>
                 </li>
                 <li>Click "Add"</li>
@@ -109,20 +75,47 @@
     </div>
 
     <script>
-        // The service worker will handle the redirect before the page even loads
-        // This is just a fallback in case the service worker isn't working
-        const urlParams = new URLSearchParams(window.location.search);
-        const query = urlParams.get('q');
-        
-        if (query) {
-            const words = query.trim().split(/\s+/).filter(word => word.length > 0);
+        // Function to handle search routing
+        function routeSearch() {
+            // Check both methods: hash and query parameter
+            let query = null;
             
-            if (words.length <= 3) {
-                window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-            } else {
-                window.location.href = `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
+            // Method 1: Check the hash (preferred method - faster)
+            if (window.location.hash && window.location.hash.startsWith('#q=')) {
+                query = decodeURIComponent(window.location.hash.substring(3));
+            }
+            
+            // Method 2: Check query parameters (fallback)
+            if (!query) {
+                const urlParams = new URLSearchParams(window.location.search);
+                query = urlParams.get('q');
+            }
+            
+            // If we have a query, route it
+            if (query) {
+                // Hide the page content instantly
+                document.body.style.opacity = '0';
+                
+                // Count words by splitting on whitespace
+                const words = query.trim().split(/\s+/).filter(word => word.length > 0);
+                
+                // Decide which search engine to use
+                if (words.length <= 3) {
+                    // Google for 3 words or less
+                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                } else {
+                    // Perplexity for more than 3 words
+                    window.location.href = `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
+                }
             }
         }
+        
+        // Run immediately and also on hash changes
+        window.addEventListener('hashchange', routeSearch);
+        document.addEventListener('DOMContentLoaded', routeSearch);
+        
+        // Try to run as early as possible
+        routeSearch();
     </script>
 </body>
 </html>
